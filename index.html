@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donnie’s Newton Fire EMS Dosage Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; }
+    .container { max-width: 400px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    select, input, button { width: 100%; margin: 5px 0; padding: 5px; }
+    #result { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Donnie’s Newton Fire EMS Dosage Calculator</h2>
+    <input type="number" id="weight" placeholder="Weight (lbs)" required>
+    <select id="drug" onchange="filterAilments()">
+      <option value="">Select Drug</option>
+      <option value="Adenosine">Adenosine</option>
+      <option value="Amiodarone">Amiodarone</option>
+      <option value="Atropine">Atropine</option>
+      <option value="Diltiazem">Diltiazem</option>
+      <option value="Diphenhydramine">Diphenhydramine</option>
+      <option value="Epinephrine">Epinephrine</option>
+      <option value="Fentanyl">Fentanyl</option>
+      <option value="Hydralazine">Hydralazine</option>
+      <option value="Ketorolac">Ketorolac</option>
+      <option value="Labetalol">Labetalol</option>
+      <option value="Lidocaine">Lidocaine</option>
+      <option value="Lorazepam">Lorazepam (Ativan)</option>
+      <option value="Magnesium Sulfate">Magnesium Sulfate</option>
+      <option value="Midazolam">Midazolam (Versed)</option>
+      <option value="Methylprednisolone">Methylprednisolone</option>
+      <option value="Narcan">Narcan</option>
+      <option value="Nitroglycerin">Nitroglycerin</option>
+      <option value="Ondansetron">Ondansetron</option>
+      <option value="Promethazine">Promethazine</option>
+      <option value="Rocuronium">Rocuronium</option>
+      <option value="Sodium Bicarbonate">Sodium Bicarbonate</option>
+      <option value="Tranexamic Acid">Tranexamic Acid</option>
+    </select>
+    <select id="ailment" onchange="calculateDose()">
+      <option value="">Select Ailment</option>
+    </select>
+    <button onclick="calculateDose()">Calculate</button>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    // Ailment mapping based on SOG for each drug
+    const ailmentMap = {
+      "Adenosine": ["SVT"],
+      "Amiodarone": ["Ventricular Fibrillation"],
+      "Atropine": ["Bradycardia", "Organophosphate Exposure"],
+      "Diltiazem": ["SVT", "Hypertensive Emergencies"],
+      "Diphenhydramine": ["Anaphylaxis"],
+      "Epinephrine": ["Anaphylaxis", "Asthma/COPD"],
+      "Fentanyl": ["Pain"],
+      "Hydralazine": ["Hypertensive Emergencies"],
+      "Ketorolac": ["Pain"],
+      "Labetalol": ["Hypertensive Emergencies"],
+      "Lidocaine": ["Ventricular Ectopy"],
+      "Lorazepam": ["Seizure", "Sedation", "Hypertensive Emergencies"],
+      "Magnesium Sulfate": ["Polymorphic VT/Torsades", "Eclampsia", "Asthma/COPD"],
+      "Midazolam": ["Seizure", "Sedation"],
+      "Methylprednisolone": ["Anaphylaxis", "Asthma/COPD"],
+      "Narcan": ["Opioid Overdose", "Poisoning/Toxic Ingestion"],
+      "Nitroglycerin": ["Acute Coronary Syndrome"],
+      "Ondansetron": ["Nausea/Vomiting"],
+      "Promethazine": ["Nausea/Vomiting"],
+      "Rocuronium": ["Medication Facilitated Airway"],
+      "Sodium Bicarbonate": ["Poisoning/Toxic Ingestion"],
+      "Tranexamic Acid": ["Traumatic Injuries", "Postpartum Hemorrhage"]
+    };
+
+    function filterAilments() {
+      let drug = document.getElementById("drug").value;
+      let ailmentSelect = document.getElementById("ailment");
+      ailmentSelect.innerHTML = "<option value=''>Select Ailment</option>";
+      if (drug) {
+        ailmentMap[drug].forEach(ailment => {
+          let option = document.createElement("option");
+          option.value = ailment;
+          option.text = ailment;
+          ailmentSelect.appendChild(option);
+        });
+      }
+    }
+
+    function calculateDose() {
+      let weight = document.getElementById("weight").value;
+      if (!weight) { document.getElementById("result").innerText = "Enter weight!"; return; }
+      let kg = Math.round(weight / 2.2);
+      let drug = document.getElementById("drug").value;
+      let ailment = document.getElementById("ailment").value;
+      let dose, minDose, maxDose, contraindications, drawUp, admin;
+
+      if (drug && ailment) {
+        if (drug === "Adenosine" && ailment === "SVT") {
+          minDose = 6; maxDose = 12; // mg per SOG 32-70
+          dose = 6; // Start at 6 mg
+          contraindications = "Contraindicated in unstable SVT requiring cardioversion, avoid in WPW (SOG 32-70).";
+          drawUp = "3 mL syringe, draw 2 mL (3 mg/mL = " + dose + " mg) for IV.";
+          admin = "IV: 23g needle, push 2 mL (" + dose + " mg) IV rapid bolus, follow with 20 mL saline flush, repeat 4 mL (" + maxDose + " mg) if needed.\nIM: Not recommended per SOG.";
+        } else if (drug === "Amiodarone" && ailment === "Ventricular Fibrillation") {
+          minDose = 300; maxDose = 450; // mg per SOG 32-67
+          dose = 300; // Start at 300 mg
+          contraindications = "Avoid in severe bradycardia or hypotension unless life-threatening (SOG 32-67).";
+          drawUp = "10 mL syringe, draw 6 mL (50 mg/mL = " + dose + " mg) for IV.";
+          admin = "IV: 23g needle, push 6 mL (" + dose + " mg) IV/IO if refractory, repeat 3 mL (150 mg) after 3-5 min.\nIM: Not recommended per SOG.";
+        } else if (drug === "Atropine" && (ailment === "Bradycardia" || ailment === "Organophosphate Exposure")) {
+          minDose = 1; maxDose = 6; // mg per SOG 32-40, 32-96 (2-6 mg for exposure)
+          dose = (ailment === "Bradycardia" ? 1 : 2); // Start at 1 mg for Bradycardia, 2 mg for Exposure
+          contraindications = "Avoid in glaucoma or tachycardia (SOG 32-40).";
+          drawUp = "Bradycardia: 1 mL syringe, draw 1 mL (1 mg/mL = " + (ailment === "Bradycardia" ? 1 : 2) + " mg) for IV.\nOrganophosphate Exposure: 1 mL syringe, draw 2 mL (1 mg/mL = 2 mg) for IV.";
+          admin = "Bradycardia - IV: 23g needle, push 1 mL (1 mg) IV/IO every 3-5 min, max 3 mL (3 mg).\nIM: Not recommended per SOG.\nOrganophosphate Exposure - IV: 23g needle, push 2 mL (2 mg) IV/IO fast, repeat x1 if symptoms return.";
+        } else if (drug === "Diltiazem" && (ailment === "SVT" || ailment === "Hypertensive Emergencies")) {
+          minDose = 5; maxDose = 20; // mg per SOG 32-70
+          dose = 10; // Start at 10 mg
+          contraindications = "Contraindicated in WPW, hypotension (systolic < 100 mmHg) (SOG 32-70).";
+          drawUp = "5 mL syringe, draw 2 mL (5 mg/mL = " + dose + " mg) for IV.";
+          admin = "IV: 23g needle, push 2 mL (" + dose + " mg) IV over 2 min if BP > 100, repeat if needed.\nIM: Not recommended per SOG.";
+        } else if (drug === "Diphenhydramine" && ailment === "Anaphylaxis") {
+          minDose = 25; maxDose = 50; // mg per SOG 32-110
+          dose = 25; // Start at 25 mg
+          contraindications = "Contraindicated in chronic kidney disease, peptic ulcer disease, recent GI bleeding, pregnancy, severe headache with suspected stroke/ICH (SOG 32-110).";
+          drawUp = "1 mL syringe, draw 0.5 mL (50 mg/mL = " + dose + " mg) for IV.\nIM: 1 mL syringe, draw 0.5 mL (" + dose + " mg) directly from 50 mg/mL vial.";
+          admin = "IV: 23g needle, push 0.5 mL (" + dose + " mg) IV slow push.\nIM: 23g needle, inject 0.5 mL (" + dose + " mg) IM.";
+        } else if (drug === "Epinephrine" && (ailment === "Anaphylaxis" || ailment === "Asthma/COPD")) {
+          minDose = 0.3; maxDose = 0.3; // mg per SOG 32-110
+          dose = 0.3;
+          contraindications = "Avoid if recent PDE-5 inhibitor use (SOG 32-110).";
+          drawUp = "1 mL syringe, draw 0.3 mL (1 mg/mL = " + dose + " mg) for IM.";
+          admin = "IV: Not recommended per SOG.\nIM: 23g needle, inject 0.3 mL (" + dose + " mg) IM.";
+        } else if (drug === "Fentanyl" && ailment === "Pain") {
+          minDose = 10; maxDose = 200; // mcg, 0.1-2 mcg/kg per SOG 32-18
+          dose = Math.round(0.1 * kg); if (dose < minDose) dose = minDose; if (dose > maxDose) dose = maxDose;
+          contraindications = "Maintain systolic BP > 90 mmHg (SOG 32-18).";
+          drawUp = "Prefilled 10 mL flush, waste 2cc (8 mL saline). Draw 2 mL (50 mcg/mL = " + dose + " mcg). Total 10 mL = " + (dose / 10) + " mcg/mL for IV.\nIM: 3 mL syringe, draw " + (dose / 50) + " mL (" + dose + " mcg) directly from 50 mcg/mL vial.";
+          admin = "IV: 23g needle, push 1 mL (" + (dose / 10) + " mcg) IV slowly, titrate to 10 mL (" + dose + " mcg).\nIM: 23g needle, inject " + (dose / 50) + " mL (" + dose + " mcg) IM.";
+        } else if (drug === "Hydralazine" && ailment === "Hypertensive Emergencies") {
+          minDose = 10; maxDose = 20; // mg per SOG 32-55
+          dose = 10; // Start at 10 mg
+          contraindications = "Avoid in aortic dissection, AMI (SOG 32-55).";
+          drawUp = "2 mL syringe, draw 2 mL (5 mg/mL = " + dose + " mg) for IV.";
+          admin = "IV: 23g needle, push 2 mL (" + dose + " mg) IV, repeat 2 mL (10 mg) after 5 min if needed.\nIM: Not recommended per SOG.";
+        } else if (drug === "Ketorolac" && ailment === "Pain") {
+          minDose = 15; maxDose = 30; // mg per SOG 32-18, adjusted for <65 yrs
+          dose = 15; // Start at 15 mg
+          contraindications = "Contraindicated in chronic kidney disease, peptic ulcer disease, recent GI bleeding, pregnancy, severe headache with suspected stroke/ICH (SOG 32-18).";
+          drawUp = "1 mL syringe, draw 0.5 mL (30 mg/mL = " + dose + " mg) for IV.\nIM: 1 mL syringe, draw 0.5 mL (" + dose + " mg) directly from 30 mg/mL vial.";
+          admin = "IV: 23g needle, push 0.5 mL (" + dose + " mg) IV.\nIM: 23g needle, inject 0.5 mL (" + dose + " mg) IM, no repeat.";
+        } else if (drug === "Labetalol" && ailment === "Hypertensive Emergencies") {
+          minDose = 10; maxDose = 20; // mg per SOG 32-55
+          dose = 10; // Start at 10 mg
+          contraindications = "Avoid in ACS (SOG 32-55).";
+          drawUp = "2 mL syringe, draw 2 mL (5 mg/mL = " + dose + " mg) for IV.";
+          admin = "IV: 23g needle, push 2 mL (" + dose + " mg) IV slow push over 2 min, repeat 2 mL (10 mg) after 15 min if needed.\nIM: Not recommended per SOG.";
+        } else if (drug === "Lidocaine" && ailment === "Ventricular Ectopy") {
+          minDose = 50; maxDose = 300; // mg, 1 mg/kg max 3 mg/kg per SOG 32-65
+          dose = Math.round(1 * kg); if (dose < minDose) dose = minDose; if (dose > maxDose) dose = maxDose;
+          contraindications = "Avoid in 2nd/3rd degree AV block without pacemaker (SOG 32-65).";
+          drawUp = "5 mL syringe, draw " + (dose / 20) + " mL (20 mg/mL = " + dose + " mg) for IV.";
+          admin = "IV: 23g needle, push " + (dose / 20) + " mL (" + dose + " mg) IV/IO, repeat 0.5 mg/kg every 2-5 min, max 3 mg/kg.\nIM: Not recommended per SOG.";
+        } else if (drug === "Lorazepam" && (ailment === "Seizure" || ailment === "Sedation" || ailment === "Hypertensive Emergencies")) {
+          minDose = 1; maxDose = 4; // mg per SOG 32-16
+          dose = 4; // Start at max 4 mg
+          contraindications = "Dilute with equal volume isotonic solution for IV/IO (SOG 32-16).";
+          drawUp = "3 mL syringe, draw 2 mL (2 mg/mL = " + dose + " mg) for IV.\nIM: 3 mL syringe, draw 2 mL (" + dose + " mg) directly from 2 mg/mL vial.";
+          admin = "IV: 23g needle, push 0.5 mL (1 mg) IV slowly, titrate to 2 mL (" + dose + " mg).\nIM: 23g needle, inject 2 mL (" + dose + " mg) IM.";
+        } else if (drug === "Magnesium Sulfate" && (ailment === "Polymorphic VT/Torsades" || ailment === "Eclampsia" || ailment === "Asthma/COPD")) {
+          minDose = 1000; maxDose = 4000; // mg per SOG 32-70, 32-125, 32-130
+          dose = (ailment === "Asthma/COPD" ? 1000 : ailment === "Eclampsia" ? 4000 : 2000); // 1 g for Asthma, 4 g for Eclampsia, 2 g for VT
+          contraindications = "Avoid in renal failure (SOG 32-70).";
+          drawUp = "Polymorphic VT/Torsades: 10 mL syringe, draw 2 mL (1000 mg/mL = 2000 mg) for IV.\nEclampsia: 10 mL syringe, draw 4 mL (1000 mg/mL = 4000 mg) for IV.\nAsthma/COPD: 10 mL syringe, draw 1 mL (1000 mg/mL = 1000 mg) for IV.\nIM: Not recommended per SOG.";
+          admin = "Polymorphic VT/Torsades - IV: 23g needle, push 2 mL (2000 mg) IV/IO over 1-2 min, repeat 2 mL (2000 mg) if needed.\nEclampsia - IV: 23g needle, push 4 mL (4000 mg) IV/IO over 10 min.\nAsthma/COPD - IV: 23g needle, push 1 mL (1000 mg) IV/IO over 10 min.\nIM: Not recommended per SOG.";
+        } else if (drug === "Midazolam" && (ailment === "Seizure" || ailment === "Sedation")) {
+          minDose = 1; maxDose = 4; // mg per SOG 32-135, 32-16
+          dose = 2; // Start at 2 mg
+          contraindications = "Maintain systolic BP > 90 mmHg unless in active seizure (SOG 32-135) or Sedation (SOG 32-16).";
+          drawUp = "3 mL syringe, draw 1 mL (2 mg/mL = " + dose + " mg) for IV.\nIM: 3 mL syringe, draw 1 mL (" + dose + " mg) directly from 2 mg/mL vial.";
+          admin = "IV: 23g needle, push 0.5 mL (1 mg) IV slowly, titrate to 2 mL (" + maxDose + " mg).\nIM: 23g needle, inject 1 mL (2 mg) IM, repeat to 2 mL if needed.";
+        } else if (drug === "Methylprednisolone" && (ailment === "Anaphylaxis" || ailment === "Asthma/COPD")) {
+          minDose = 125; maxDose = 125; // mg per SOG 32-110
+          dose = 125; // Fixed dose
+          contraindications = "Hypersensitivity.";
+          drawUp = "3 mL syringe, draw 2.5 mL (50 mg/mL = " + dose + " mg) for IV.\nIM: 3 mL syringe, draw 2.5 mL (" + dose + " mg) directly from 50 mg/mL vial.";
+          admin = "IV: 23g needle, push 2.5 mL (" + dose + " mg) IV/IO.\nIM: 23g needle, inject 2.5 mL (" + dose + " mg) IM.";
+        } else if (drug === "Narcan" && (ailment === "Opioid Overdose" || ailment === "Poisoning/Toxic Ingestion")) {
+          minDose = 0.1; maxDose = 2; // mg per SOG 32-96
+          dose = 0.1; // Start at 0.1 mg
+          contraindications = "Hypersensitivity.";
+          drawUp = "1 mL syringe, draw 0.1 mL (1 mg/mL = " + dose + " mg) for IV.\nIM: 1 mL syringe, draw 0.1 mL (" + dose + " mg) directly from 1 mg/mL vial.";
+          admin = "IV: 23g needle, push 0.1 mL (" + dose + " mg) IV/IO, repeat to restore respiratory drive.\nIM: 23g needle, inject 0.1 mL (" + dose + " mg) IM, repeat if needed.";
+        } else if (drug === "Nitroglycerin" && ailment === "Acute Coronary Syndrome") {
+          minDose = 0.4; maxDose = 1.2; // mg per SOG 32-50, max 3 doses
+          dose = 0.4; // Start at 0.4 mg
+          contraindications = "Avoid if systolic BP < 100 or recent PDE-5 inhibitor use (SOG 32-50).";
+          drawUp = "Not applicable (SL administration).";
+          admin = "SL: 23g needle not used, administer 0.4 mg SL, repeat 0.4 mg every 3-5 min (max 1.2 mg) if BP > 100.\nIM: Not recommended per SOG.";
+        } else if (drug === "Ondansetron" && ailment === "Nausea/Vomiting") {
+          minDose = 4; maxDose = 8; // mg per SOG 32-17
+          dose = 4; // Start at 4 mg
+          contraindications = "Hypersensitivity.";
+          drawUp = "2 mL syringe, draw 2 mL (2 mg/mL = " + dose + " mg) for IV.\nIM: 2 mL syringe, draw 2 mL (" + dose + " mg) directly from 2 mg/mL vial.";
+          admin = "IV: 23g needle, push 2 mL (" + dose + " mg) IV.\nIM: 23g needle, inject 2 mL (" + dose + " mg) IM, repeat 2 mL (4 mg) if needed.";
+        } else if (drug === "Promethazine" && ailment === "Nausea/Vomiting") {
+          minDose = 12.5; maxDose = 25; // mg per SOG 32-17
+          dose = 12.5; // Start at 12.5 mg
+          contraindications = "Avoid in severe respiratory depression (SOG 32-17).";
+          drawUp = "1 mL syringe, draw 0.5 mL (25 mg/mL = " + dose + " mg) for IV.\nIM: 1 mL syringe, draw 0.5 mL (" + dose + " mg) directly from 25 mg/mL vial.";
+          admin = "IV: 23g needle, push 0.5 mL (" + dose + " mg) IV slow push.\nIM: 23g needle, inject 0.5 mL (" + dose + " mg) IM, repeat 0.5 mL (12.5 mg) if needed.";
+        } else if (drug === "Rocuronium" && ailment === "Medication Facilitated Airway") {
+          minDose = 50; maxDose = 100; // mg, 1 mg/kg per SOG 32-15
+          dose = Math.round(1 * kg); if (dose < minDose) dose = minDose; if (dose > maxDose) dose = maxDose;
+          contraindications = "Hypersensitivity.";
+          drawUp = "10 mL syringe, draw " + (dose / 10) + " mL (10 mg/mL = " + dose + " mg) for IV.";
+          admin = "IV: 23g needle, push " + (dose / 10) + " mL (" + dose + " mg) IV/IO.\nIM: Not recommended per SOG.";
+        } else if (drug === "Sodium Bicarbonate" && ailment === "Poisoning/Toxic Ingestion") {
+          minDose = 50; maxDose = 200; // mEq, 1-2 mEq/kg per SOG 32-96
+          dose = Math.round(1 * kg); if (dose < minDose) dose = minDose; if (dose > maxDose) dose = maxDose;
+          contraindications = "Avoid in alkalosis, hypocalcemia (SOG 32-96).";
+          drawUp = "10 mL syringe, draw " + (dose / 10) + " mL (1 mEq/mL = " + dose + " mEq) for IV.";
+          admin = "IV: 23g needle, push " + (dose / 10) + " mL (" + dose + " mEq) IV/IO slow push over 2 min.\nIM: Not recommended per SOG.";
+        } else if (drug === "Tranexamic Acid" && (ailment === "Traumatic Injuries" || ailment === "Postpartum Hemorrhage")) {
+          minDose = 2000; maxDose = 2000; // mg per SOG 32-150
+          dose = 2000; // Fixed dose
+          contraindications = "Hypersensitivity.";
+          drawUp = "10 mL syringe, draw 2 mL (1000 mg/mL = " + dose + " mg) for IV.";
+          admin = "IV: 23g needle, push 2 mL (" + dose + " mg) IV/IO slow push.\nIM: Not recommended per SOG.";
+        } else {
+          document.getElementById("result").innerText = "Select a drug and ailment!";
+          return;
+        }
+        document.getElementById("result").innerText = "Weight: " + weight + " lbs (" + kg + " kg)\n\nDose: " + dose + " " + (drug === "Fentanyl" || drug === "Adenosine" ? "mcg" : drug === "Nitroglycerin" ? "mg" : "mg") + " (Min: " + minDose + ", Max: " + maxDose + ")\n\nContraindications: " + contraindications + "\n\nDraw-Up: " + drawUp + "\n\nAdmin: " + admin;
+      } else {
+        document.getElementById("result").innerText = "Select a drug and ailment!";
+      }
+    }
+  </script>
+</body>
+</html>
