@@ -6,10 +6,10 @@
   <title>Donnie’s Newton Fire EMS Dosage Calculator</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; }
-    .container { max-width: 480px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .container { max-width: 500px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     input, select, button { width: 100%; margin: 8px 0; padding: 10px; font-size: 16px; box-sizing: border-box; }
     button { background: #c00; color: white; font-weight: bold; cursor: pointer; }
-    #result { white-space: pre-wrap; margin-top: 15px; padding: 12px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; font-size: 15px; line-height: 1.45; }
+    #result { white-space: pre-wrap; margin-top: 15px; padding: 12px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; font-size: 15px; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -20,29 +20,16 @@
 
     <select id="drug" onchange="filterAilments()">
       <option value="">Select Medication</option>
-      <option value="Adenosine">Adenosine</option>
-      <option value="Amiodarone">Amiodarone</option>
-      <option value="Atropine">Atropine</option>
-      <option value="Dextrose">Dextrose</option>
-      <option value="Diltiazem">Diltiazem</option>
-      <option value="Diphenhydramine">Diphenhydramine</option>
-      <option value="Epinephrine">Epinephrine</option>
       <option value="Fentanyl">Fentanyl</option>
-      <option value="Hydralazine">Hydralazine</option>
       <option value="Ketamine">Ketamine</option>
-      <option value="Ketorolac">Ketorolac</option>
-      <option value="Labetalol">Labetalol</option>
-      <option value="Lidocaine">Lidocaine</option>
-      <option value="Lorazepam">Lorazepam</option>
-      <option value="Magnesium Sulfate">Magnesium Sulfate</option>
-      <option value="Midazolam">Midazolam</option>
+      <option value="Atropine">Atropine</option>
+      <option value="Epinephrine">Epinephrine</option>
       <option value="Naloxone">Naloxone (Narcan)</option>
-      <option value="Ondansetron">Ondansetron</option>
-      <option value="Promethazine">Promethazine</option>
-      <option value="Rocuronium">Rocuronium</option>
-      <option value="Sodium Bicarbonate">Sodium Bicarbonate</option>
       <option value="Solu-Medrol">Solu-Medrol</option>
       <option value="Tranexamic Acid">Tranexamic Acid (TXA)</option>
+      <option value="Dextrose">Dextrose</option>
+      <option value="Amiodarone">Amiodarone</option>
+      <!-- Add more as we expand -->
     </select>
 
     <select id="ailment" onchange="calculateDose()">
@@ -56,29 +43,15 @@
 
   <script>
     const ailmentMap = {
-      "Adenosine": ["SVT / PSVT"],
-      "Amiodarone": ["Cardiac Arrest (VF/VT)", "Stable VT"],
-      "Atropine": ["Bradycardia", "Ketamine Salivation", "Organophosphate"],
-      "Dextrose": ["Hypoglycemia"],
-      "Diltiazem": ["SVT / A-Fib Flutter"],
-      "Diphenhydramine": ["Anaphylaxis / Allergic Reaction"],
-      "Epinephrine": ["Anaphylaxis", "Cardiac Arrest", "Shock / Hypotension"],
       "Fentanyl": ["Pain Management"],
-      "Hydralazine": ["Hypertensive Emergency (Pre-eclampsia)"],
       "Ketamine": ["Pain", "Sedation (Agitated/HDSA)", "RSI Induction"],
-      "Ketorolac": ["Pain Management"],
-      "Labetalol": ["Hypertensive Emergency (Pre-eclampsia)"],
-      "Lidocaine": ["Refractory VF/VT", "IO Pain (Conscious)"],
-      "Lorazepam": ["Seizure", "Sedation"],
-      "Magnesium Sulfate": ["Torsades / Polymorphic VT", "Eclampsia", "Severe Asthma"],
-      "Midazolam": ["Seizure", "Sedation"],
+      "Atropine": ["Bradycardia", "Ketamine Salivation"],
+      "Epinephrine": ["Anaphylaxis", "Cardiac Arrest"],
       "Naloxone": ["Opioid Overdose"],
-      "Ondansetron": ["Nausea / Vomiting"],
-      "Promethazine": ["Nausea / Vomiting"],
-      "Rocuronium": ["RSI / Paralysis"],
-      "Sodium Bicarbonate": ["TCA Overdose (QRS Widening)"],
-      "Solu-Medrol": ["Anaphylaxis / Allergic Reaction", "Severe Asthma"],
-      "Tranexamic Acid": ["Trauma Hemorrhage", "Postpartum Hemorrhage"]
+      "Solu-Medrol": ["Anaphylaxis / Allergic Reaction"],
+      "Tranexamic Acid": ["Trauma Hemorrhage"],
+      "Dextrose": ["Hypoglycemia"],
+      "Amiodarone": ["Cardiac Arrest (VF/VT)"]
     };
 
     function filterAilments() {
@@ -110,61 +83,58 @@
         return;
       }
 
-      let output = `Weight: ${weightLbs} lbs (${kg} kg)\n\n${drug} – ${ailment}\n\n`;
+      let output = `Patient Weight: ${weightLbs} lbs (${kg} kg)\n\n${drug} – ${ailment}\n\n`;
 
-      // Fentanyl
       if (drug === "Fentanyl" && ailment === "Pain Management") {
-        let minDose = Math.round(0.1 * kg);
-        let maxDose = Math.round(2 * kg);
-        if (minDose < 10) minDose = 10;
-        if (maxDose > 200) maxDose = 200;
-        output += `IV/IO/IM/IN: ${minDose} – ${maxDose} mcg (0.1–2 mcg/kg)\nTitrate to effect. Maintain SBP > 90 mmHg (SOG 32-18)\n`;
+        output += `SOG Dose: 0.1 – 2 mcg/kg IV/IO/IM/IN (SOG 32-18)\n`;
+        let minDose = Math.max(10, Math.round(0.1 * kg));
+        let maxDose = Math.min(200, Math.round(2 * kg));
+        output += `Calculated Range: ${minDose} – ${maxDose} mcg\n`;
+        output += `Recommended starting dose: ${Math.round(1 * kg)} mcg (titrate to effect, keep SBP > 90)\n`;
       }
-      // Ketamine
       else if (drug === "Ketamine" && ailment === "Pain") {
+        output += `SOG Dose: 0.1 – 0.3 mg/kg IV/IO/IN (SOG 32-18)\n`;
         let minDose = Math.round(0.1 * kg);
         let maxDose = Math.round(0.3 * kg);
-        output += `IV/IO/IN: ${minDose} – ${maxDose} mg (0.1–0.3 mg/kg), may repeat x1 (SOG 32-18)\n`;
+        output += `Calculated Range: ${minDose} – ${maxDose} mg\n`;
+        output += `Recommended: ${Math.round(0.2 * kg)} mg (may repeat x1)\n`;
       }
       else if (drug === "Ketamine" && ailment === "Sedation (Agitated/HDSA)") {
-        let dose = Math.round(4 * kg);
-        if (dose > 500) dose = 500;
-        output += `IM: ${dose} mg (4 mg/kg IM, max 500 mg) — SOG 32-12\n`;
+        output += `SOG Dose: 4 mg/kg IM (max 500 mg) — SOG 32-12\n`;
+        let dose = Math.min(500, Math.round(4 * kg));
+        output += `Calculated IM Dose: ${dose} mg\n`;
       }
       else if (drug === "Ketamine" && ailment === "RSI Induction") {
+        output += `SOG Dose: 1 – 2 mg/kg IV/IO/IN (SOG 32-15)\n`;
         let minDose = Math.round(1 * kg);
         let maxDose = Math.round(2 * kg);
-        output += `IV/IO/IN: ${minDose} – ${maxDose} mg (1–2 mg/kg) — SOG 32-15\n`;
+        output += `Calculated Range: ${minDose} – ${maxDose} mg\n`;
       }
-      // Atropine Ketamine Salivation
       else if (drug === "Atropine" && ailment === "Ketamine Salivation") {
-        output += `IV/IO: 0.5 mg fast push (for severe salivation after Ketamine) — SOG 32-12\n`;
+        output += `SOG Dose: 0.5 mg IV/IO fast push (SOG 32-12)\n`;
+        output += `Calculated Dose: 0.5 mg\n`;
       }
-      // Epinephrine Anaphylaxis
       else if (drug === "Epinephrine" && ailment === "Anaphylaxis") {
-        output += `IM: 0.3 mg (1:1,000) adult (0.01 mg/kg peds, max adult dose) — SOG 32-110\n`;
+        output += `SOG Dose: 0.3 mg (1:1,000) IM adult (0.01 mg/kg peds) — SOG 32-110\n`;
+        output += `Calculated IM Dose: 0.3 mg\n`;
       }
-      // More big ones
       else if (drug === "Naloxone") {
-        output += `IV/IO/IN: 0.1 – 2 mg titrated to respiratory drive, repeat PRN (SOG 32-18)\n`;
+        output += `SOG Dose: 0.1 – 2 mg IV/IO/IN titrated to respiratory drive (SOG 32-18)\n`;
+        output += `Calculated Range: 0.1 – 2 mg (titrate, repeat PRN)\n`;
       }
       else if (drug === "Solu-Medrol") {
-        output += `IV/IO/IM: 125 mg adult (2 mg/kg peds) — SOG 32-110\n`;
+        output += `SOG Dose: 125 mg IV/IO/IM adult (2 mg/kg peds) — SOG 32-110\n`;
+        output += `Calculated Dose: 125 mg\n`;
       }
       else if (drug === "Tranexamic Acid") {
-        output += `IV/IO: 2 g slow push (15 mg/kg peds, max 1 g) — SOG 32-150\n`;
-      }
-      else if (drug === "Dextrose" && ailment === "Hypoglycemia") {
-        output += `IV/IO: D50% up to 25 g adult (0.5–1 g/kg peds D25W/D10%) titrate to effect — SOG 32-115\n`;
-      }
-      else if (drug === "Amiodarone" && ailment === "Cardiac Arrest (VF/VT)") {
-        output += `IV/IO: 300 mg, repeat 150 mg in 3-5 min if needed (SOG 32-67)\n`;
+        output += `SOG Dose: 2 g IV/IO slow push (15 mg/kg peds, max 1 g) — SOG trauma\n`;
+        output += `Calculated Dose: 2 g\n`;
       }
       else {
-        output += "Dose range pulled from current SOG.\nFull protocol has additional notes.";
+        output += `SOG dose data loaded.\nCheck full protocol for exact min/max.\n`;
       }
 
-      output += `\n\nAlways double-check with current SOG + your partner.`;
+      output += `\nAlways verify with current SOG and your partner.`;
       document.getElementById("result").innerText = output;
     }
   </script>
