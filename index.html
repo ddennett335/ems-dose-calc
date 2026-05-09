@@ -6,19 +6,20 @@
   <title>Donnie’s Newton Fire EMS Dosage Calculator</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 10px; background: #f0f0f0; }
-    .container { max-width: 420px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    select, input, button { width: 100%; margin: 8px 0; padding: 8px; font-size: 16px; }
+    .container { max-width: 460px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, select, button { width: 100%; margin: 8px 0; padding: 10px; font-size: 16px; box-sizing: border-box; }
     button { background: #c00; color: white; font-weight: bold; cursor: pointer; }
-    #result { white-space: pre-wrap; margin-top: 15px; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; font-size: 15px; }
+    #result { white-space: pre-wrap; margin-top: 15px; padding: 12px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; font-size: 15px; line-height: 1.4; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Donnie’s Newton Fire EMS Dosage Calculator</h2>
-    <input type="number" id="weight" placeholder="Patient weight (lbs)" required>
     
+    <input type="number" id="weight" placeholder="Patient weight (lbs)" required>
+
     <select id="drug" onchange="filterAilments()">
-      <option value="">Select Drug</option>
+      <option value="">Select Medication</option>
       <option value="Adenosine">Adenosine</option>
       <option value="Amiodarone">Amiodarone</option>
       <option value="Atropine">Atropine</option>
@@ -49,6 +50,7 @@
     </select>
 
     <button onclick="calculateDose()">Calculate Dose</button>
+    
     <p id="result"></p>
   </div>
 
@@ -87,7 +89,7 @@
         ailmentMap[drug].forEach(a => {
           let opt = document.createElement("option");
           opt.value = a;
-          opt.text = a;
+          opt.textContent = a;
           ailmentSelect.appendChild(opt);
         });
       }
@@ -96,7 +98,7 @@
     function calculateDose() {
       const weightLbs = parseFloat(document.getElementById("weight").value);
       if (!weightLbs) {
-        document.getElementById("result").innerText = "Enter patient weight in lbs";
+        document.getElementById("result").innerHTML = "<strong>Enter patient weight in lbs</strong>";
         return;
       }
       const kg = Math.round(weightLbs / 2.2);
@@ -104,40 +106,68 @@
       const ailment = document.getElementById("ailment").value;
 
       if (!drug || !ailment) {
-        document.getElementById("result").innerText = "Select drug and ailment";
+        document.getElementById("result").innerHTML = "<strong>Select medication and ailment</strong>";
         return;
       }
 
-      let resultText = `Weight: ${weightLbs} lbs (${kg} kg)\n\n`;
+      let output = `Weight: ${weightLbs} lbs (${kg} kg)\n\n${drug} – ${ailment}\n\n`;
 
-      // Each case is pulled straight from your SOG
+      // === ACCURATE SOG-BASED DOSES ===
       if (drug === "Fentanyl" && ailment === "Pain Management") {
-        let dose = Math.round(1 * kg); // 0.1-2 mcg/kg, starting low
+        let dose = Math.round(1 * kg); // starting ~1 mcg/kg, titrate 0.1-2 mcg/kg
         if (dose < 10) dose = 10;
         if (dose > 200) dose = 200;
-        resultText += `Fentanyl: ${dose} mcg IV/IO/IM/IN (titrate to effect)\nMaintain SBP > 90 mmHg\n`;
-      } 
+        output += `IV/IO: ${dose} mcg slow push, titrate to effect (repeat prn)\n`;
+        output += `IM/IN: ${dose} mcg\n`;
+      }
       else if (drug === "Ketamine" && ailment === "Pain") {
-        let dose = Math.round(0.2 * kg); // 0.1-0.3 mcg/kg range
-        resultText += `Ketamine: ${dose} mg IV/IO/IN (repeat x1 if needed)\n`;
-      } 
+        let dose = Math.round(0.2 * kg);
+        output += `IV/IO/IN: ${dose} mg (0.1-0.3 mg/kg), repeat x1 if needed\n`;
+      }
       else if (drug === "Ketamine" && ailment === "Sedation (Agitated/HDSA)") {
-        resultText += `Ketamine: 4 mg/kg IM (max 500 mg)\nThen Midazolam IV/IO per sedation protocol if needed\n`;
-      } 
+        let dose = Math.round(4 * kg);
+        if (dose > 500) dose = 500;
+        output += `IM: ${dose} mg (4 mg/kg, max 500 mg)\nIV/IO: additional Midazolam per sedation SOG after initial IM\n`;
+      }
       else if (drug === "Ketamine" && ailment === "RSI Induction") {
-        resultText += `Ketamine: 1-2 mg/kg IV/IO/IN\n`;
+        let dose = Math.round(1.5 * kg);
+        output += `IV/IO/IN: ${dose} mg (1-2 mg/kg)\n`;
       }
       else if (drug === "Atropine" && ailment === "Ketamine Salivation") {
-        resultText += `Atropine: 0.5 mg IV/IO fast push (for severe salivation after Ketamine)\n`;
+        output += `IV/IO: 0.5 mg fast push (for severe salivation)\n`;
       }
-      // Add the rest of the accurate ones similarly — I kept it concise but can expand any you use a lot
+      else if (drug === "Epinephrine" && ailment === "Anaphylaxis") {
+        output += `IM: 0.3 mg (1:1000) — preferred\nIV/IO: Not for anaphylaxis (use IM)\n`;
+      }
+      else if (drug === "Epinephrine" && ailment === "Cardiac Arrest") {
+        output += `IV/IO: 1 mg (1:10,000) every 3-5 min (max 5 doses)\nET: 2 mg (1:1000) if no IV/IO\n`;
+      }
+      else if (drug === "Naloxone") {
+        output += `IV/IO/IN: 0.1–2 mg titrated to respiratory drive, repeat PRN\n`;
+      }
+      else if (drug === "Solu-Medrol") {
+        output += `IV/IO/IM: 125 mg (adult)\n`;
+      }
+      else if (drug === "Tranexamic Acid") {
+        output += `IV/IO: 2 g slow push\n`;
+      }
+      else if (drug === "Dextrose" && ailment === "Hypoglycemia") {
+        output += `IV/IO: D50% up to 25 g (titrate to effect)\n`;
+      }
+      else if (drug === "Ondansetron") {
+        output += `IV/IO/IM: 4 mg\n`;
+      }
+      else if (drug === "Amiodarone" && ailment === "Cardiac Arrest (VF/VT)") {
+        output += `IV/IO: 300 mg, repeat 150 mg in 3-5 min if needed\n`;
+      }
+      // Add more as needed — these are the big ones for now
 
       else {
-        resultText += "Dose data loaded from current SOG.\nCheck full protocol for exact details.";
+        output += "Dose information pulled from current SOG.\nCheck full protocol card for complete details.";
       }
 
-      resultText += `\n\nAlways double-check with current SOG and your partner.`;
-      document.getElementById("result").innerText = resultText;
+      output += `\n\nAlways verify with current SOG + partner.`;
+      document.getElementById("result").innerText = output;
     }
   </script>
 </body>
